@@ -3,7 +3,7 @@ use rust_rpc::{
     global::client_conections::{get_client, register_client},
     models::errors::{ServerError, ServerErrorKind},
 };
-use std::{error::Error, process};
+use std::{env, error::Error, process};
 use tokio::{
     self,
     net::TcpListener,
@@ -29,9 +29,11 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 }
 
 async fn run() -> Result<(), Box<dyn Error + Send + Sync>> {
-    let listener = match TcpListener::bind("127.0.0.1:5000").await {
+    let bind_addr = env::var("BIND_ADDR").unwrap_or_else(|_| "127.0.0.1:5000".to_string());
+
+    let listener = match TcpListener::bind(&bind_addr).await {
         Ok(listener) => {
-            println!("Servidor escuchando en 127.0.0.1:5000");
+            println!("Servidor escuchando en {bind_addr}");
             listener
         }
         Err(err) => {
@@ -74,7 +76,8 @@ async fn run() -> Result<(), Box<dyn Error + Send + Sync>> {
 }
 
 async fn reconnect_loop() {
-    let addr = "127.0.0.1:65432";
+    let addr = env::var("PYTHON_ADDR").unwrap_or_else(|_| "127.0.0.1:65432".to_string());
+    let addr = addr.as_str();
     let name = "python";
 
     loop {
